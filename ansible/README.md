@@ -35,4 +35,4 @@ ansible-playbook -i inventories/hyperv/hosts.ini playbooks/02-bastion.yml --ask-
 ## 시크릿과 공개용 정리
 - 비밀번호·토큰·키는 `inventories/<환경>/group_vars/all.yml`의 `vault_*` 변수로 받고 ansible-vault로 암호화합니다.
 - 이 저장소에는 **예시 파일만** 있습니다(`inventories/hyperv/*.example`). 실제 inventory, 변수 파일, 인증서·키(`roles/bastion/files/`)는 올리지 않았고 `.gitignore`로 막아 두었습니다.
-- 공개하면서 IP(`10.99.x.x`), 도메인(`example.internal`, `lab.internal`), 포트 노킹 순서(`10001,10002,10003`)는 예시 값으로 바꿨습니다. 그대로 실행하려면 실제 값으로 채워야 합니다.
+- 공개하면서 IP는 문서용 대역(`192.0.2.x`, `198.51.100.x`, `203.0.113.x`), 도메인은 `example.internal`, 포트 노킹 순서는 예시 값으로 바꿨습니다. 그대로 실행하려면 실제 값으로 채워야 합니다.

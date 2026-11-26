@@ -45,6 +45,10 @@ docs/                                 # 컷오버 검증·롤백 문서
 - 공개본에서는 Sealed Secret 5개 파일을 제외했습니다. 그대로 배포할 수 없고, 사용하려면 자신의 값과 시크릿을 채워야 합니다.
 - `*.secret.yaml`, `*-credentials.yaml`, `.env*`는 `.gitignore`로 막아 둡니다.
 
+## 벤더 차트
+
+업스트림 Helm 차트 패키지(`apps/*/charts/*.tgz`)는 포함하지 않았습니다. 각 앱의 `Chart.lock`을 기준으로 `helm dependency build`로 받습니다.
+
 ## 관련 저장소
 
 - [homelab-terraform](https://github.com/wownae-ct/homelab-terraform): Proxmox·AWS·Cloudflare를 정의한 Terraform
