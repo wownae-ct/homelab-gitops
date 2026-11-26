@@ -1,0 +1,2 @@
+k8s_node_ip: 203.0.113.21
+k8s_longhorn_disk: /dev/sda      # Longhorn 전용 빈 디스크

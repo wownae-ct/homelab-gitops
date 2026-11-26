@@ -1,0 +1,7 @@
+*.secret.yaml
+*-credentials.yaml
+*-secret.yaml
+.env*
+!*sealed-secret.yaml
+ansible/inventory/hosts.ini
+apps/jenkins/charts/

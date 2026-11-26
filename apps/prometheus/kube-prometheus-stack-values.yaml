@@ -1,0 +1,152 @@
+grafana:
+  serviceMonitor:
+    labels:
+      release: kube-prometheus-stack
+    scrapeTimeout: 10s
+  admin:
+    existingSecret: grafana-admin-secret
+    userKey: admin-user
+    passwordKey: admin-password
+  grafana.ini:
+    server:
+      domain: grafana.example.internal
+      root_url: "%(protocol)s://%(domain)s/"
+      serve_from_sub_path: false
+    security:
+      csrf_trusted_origins: grafana.example.internal
+      csrf_additional_headers: X-Forwarded-Host
+      cookie_samesite: lax
+  persistence:
+    enabled: true
+    size: 2Gi
+    storageClassName: longhorn
+  podAnnotations:
+    sidecar.istio.io/inject: "false"
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      url: http://loki.monitoring.svc.cluster.local:3100
+      access: proxy
+      isDefault: false
+      jsonData:
+        httpHeaderName1: X-Scope-OrgID
+      secureJsonData:
+        httpHeaderValue1: $__file{/etc/grafana/secrets/loki-datasource/httpHeaderValue1}
+  extraSecretMounts:
+    - name: loki-datasource-secret
+      secretName: grafana-datasource-loki-secret
+      defaultMode: 0440
+      mountPath: /etc/grafana/secrets/loki-datasource
+      readOnly: true
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      searchNamespace: ALL
+      folderAnnotation: grafana_folder
+      provider:
+        foldersFromFilesStructure: true
+prometheus:
+  prometheusSpec:
+    retention: 3d
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: longhorn
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+prometheus-node-exporter:
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+alertmanager:
+  alertmanagerSpec:
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: longhorn
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 2Gi
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      group_by: ['alertname']
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 1h
+      receiver: 'sns-email'
+      routes:
+        - match:
+            alertname: Watchdog
+          receiver: 'null'
+        - match:
+            alertname: TargetDown
+            job: kube-prometheus-stack-grafana
+          receiver: 'null'
+        - match:
+            alertname: TargetDown
+            job: monitoring/istio-proxies-monitor
+          receiver: 'null'
+        - match_re:
+            alertname: (KubeNodeNotReady|KubePodCrashLooping)
+          receiver: 'sns-email'
+          repeat_interval: 5m
+    receivers:
+      - name: 'null'
+      - name: 'sns-email'
+        sns_configs:
+          - topic_arn: "arn:aws:sns:ap-northeast-2:123456789012:k8s-cluster-alerts"
+            subject: "[K8s Alert] {{ .GroupLabels.alertname }}"
+            message: '[{{ range $i, $a := .Alerts }}{{ if $i }},{{ end }}{"status":"{{ $a.Status }}","labels":{"alertname":"{{ $a.Labels.alertname }}","severity":"{{ $a.Labels.severity }}","namespace":"{{ $a.Labels.namespace }}","job":"{{ $a.Labels.job }}"},"annotations":{"summary":"{{ $a.Annotations.summary }}","description":"{{ $a.Annotations.description }}"}}{{ end }}]'
+            sigv4:
+              region: "ap-northeast-2"
+              access_key: "<REPLACE ACCESSKEY>"
+              secret_key: "<REPLACE SECRETKEY>"
+kubeProxy:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+
+defaultRules:
+  disabled:
+    KubeNodeNotReady: true
+
+additionalPrometheusRulesMap:
+  custom-alerts:
+    groups:
+      - name: custom-node-alerts
+        rules:
+          - alert: KubeNodeNotReady
+            expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Node {{ $labels.node }} is not ready"
+              description: "{{ $labels.node }} has been unready for more than 1 minute"
+
+kubeEtcd:
+  enabled: true
+  endpoints:
+    - 192.0.2.241
+    - 192.0.2.242
+    - 192.0.2.243
+  service:
+    enabled: true
+    port: 2381
+    targetPort: 2381
+  serviceMonitor:
+    enabled: true
+    scheme: http
+    insecureSkipVerify: true

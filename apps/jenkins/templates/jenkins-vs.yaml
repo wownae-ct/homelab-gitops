@@ -1,0 +1,17 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: jenkins-vs
+  namespace: jenkins
+spec:
+  gateways:
+  - istio-system/internal-gateway
+  hosts:
+  - "jenkins.internal"
+  - "jenkins.example.internal"
+  http:
+  - route:
+    - destination:
+        host: jenkins.jenkins.svc.cluster.local
+        port:
+          number: 8080

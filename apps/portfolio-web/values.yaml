@@ -1,0 +1,23 @@
+image:
+  repository: 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/portfolio-web
+  tag: "12"
+  pullPolicy: Always
+
+replicaCount: 2
+
+service:
+  port: 3000
+
+
+ingress:
+  externalHost: example.internal
+  internalHost: portfolio-web.internal
+  path: /
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "100m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
