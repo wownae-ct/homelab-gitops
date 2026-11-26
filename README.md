@@ -4,7 +4,7 @@
 
 홈랩 Kubernetes HA 클러스터를 **코드로 만들고(IaC), Git 커밋만으로 배포·복구(GitOps)** 하는 구성 저장소입니다. 서버 구축은 Ansible, 앱 배포는 ArgoCD, 빌드는 Jenkins, 관측은 Prometheus·Loki·Grafana가 맡습니다.
 
-## DevOps 관점 요약
+## 요약
 
 | 영역 | 내용 | 위치 |
 |---|---|---|
